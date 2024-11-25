@@ -3,33 +3,91 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>QR Code Attendance</title>
+  <title>QR Code Attendance System</title>
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html5-qrcode/minified/html5-qrcode.min.js"></script>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(to right, #6a11cb, #2575fc);
+      color: #fff;
+    }
+    h1, h2 {
       text-align: center;
-      padding: 20px;
+      font-weight: 600;
+      margin-bottom: 10px;
     }
     .container {
-      margin: 20px;
+      max-width: 800px;
+      margin: 20px auto;
+      background: #fff;
+      color: #333;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      padding: 20px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      margin: 15px 0;
+    }
+    .form-group label {
+      margin-bottom: 5px;
+      font-weight: 500;
+    }
+    .form-group input {
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    button {
+      padding: 10px 15px;
+      font-size: 16px;
+      font-weight: bold;
+      border: none;
+      border-radius: 5px;
+      background: #6a11cb;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background: #2575fc;
     }
     canvas {
-      margin-top: 10px;
+      margin: 10px auto;
+      display: block;
+    }
+    #reader {
+      width: 300px;
+      margin: 20px auto;
+      border: 2px dashed #2575fc;
+      border-radius: 10px;
+      padding: 10px;
     }
     table {
-      margin: 20px auto;
+      width: 100%;
       border-collapse: collapse;
-      width: 90%;
+      margin-top: 20px;
     }
     th, td {
+      padding: 10px;
       border: 1px solid #ddd;
-      padding: 8px;
       text-align: center;
     }
     th {
-      background-color: #f4f4f4;
+      background: #2575fc;
+      color: #fff;
+      font-weight: bold;
+    }
+    tbody tr:nth-child(odd) {
+      background: #f9f9f9;
+    }
+    tbody tr:nth-child(even) {
+      background: #efefef;
     }
   </style>
 </head>
@@ -38,16 +96,22 @@
 
   <div class="container">
     <h2>Generate QR Code</h2>
-    <input type="text" id="studentName" placeholder="Enter Student Name">
-    <input type="text" id="admissionNumber" placeholder="Enter Admission Number">
+    <div class="form-group">
+      <label for="studentName">Student Name</label>
+      <input type="text" id="studentName" placeholder="Enter Student Name">
+    </div>
+    <div class="form-group">
+      <label for="admissionNumber">Admission Number</label>
+      <input type="text" id="admissionNumber" placeholder="Enter Admission Number">
+    </div>
     <button onclick="generateQRCode()">Generate QR Code</button>
     <canvas id="qrcodeCanvas"></canvas>
   </div>
 
   <div class="container">
     <h2>Scan QR Code</h2>
-    <div id="reader" style="width: 300px; margin: auto;"></div>
-    <p id="scanResult"></p>
+    <div id="reader"></div>
+    <p id="scanResult" style="font-weight: bold; color: #2575fc; text-align: center; margin-top: 10px;"></p>
   </div>
 
   <div class="container">
@@ -57,7 +121,7 @@
         <tr>
           <th>Student Name</th>
           <th>Admission Number</th>
-          <th>Attendance Status</th>
+          <th>Status</th>
         </tr>
       </thead>
       <tbody id="attendanceTable"></tbody>
@@ -67,8 +131,8 @@
   <script>
     // Generate QR Code
     function generateQRCode() {
-      const name = document.getElementById('studentName').value;
-      const admission = document.getElementById('admissionNumber').value;
+      const name = document.getElementById('studentName').value.trim();
+      const admission = document.getElementById('admissionNumber').value.trim();
 
       if (!name || !admission) {
         alert("Please enter both Student Name and Admission Number.");
@@ -84,27 +148,32 @@
       });
     }
 
-    // Start QR Code Scanner
+    // QR Code Scanner
     const attendanceTable = document.getElementById('attendanceTable');
     const scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
 
     scanner.render((decodedText) => {
-      const data = JSON.parse(decodedText);
-      const { name, admission } = data;
+      try {
+        const data = JSON.parse(decodedText);
+        const { name, admission } = data;
 
-      // Check if already marked
-      const existingRow = [...attendanceTable.rows].find(row => row.cells[1].innerText === admission);
+        // Check if already marked
+        const existingRow = [...attendanceTable.rows].find(row => row.cells[1].innerText === admission);
+        if (existingRow) {
+          alert(`${name} has already been marked present.`);
+          return;
+        }
 
-      if (existingRow) {
-        alert(`${name} has already been marked present!`);
-        return;
+        // Add to attendance table
+        const newRow = attendanceTable.insertRow();
+        newRow.insertCell(0).innerText = name;
+        newRow.insertCell(1).innerText = admission;
+        newRow.insertCell(2).innerText = "Present";
+
+        document.getElementById('scanResult').innerText = `Marked Present: ${name}`;
+      } catch (error) {
+        alert("Invalid QR Code!");
       }
-
-      // Add to attendance table
-      const newRow = attendanceTable.insertRow();
-      newRow.insertCell(0).innerText = name;
-      newRow.insertCell(1).innerText = admission;
-      newRow.insertCell(2).innerText = "Present";
     });
   </script>
 </body>
