@@ -129,6 +129,32 @@
   </div>
 
   <script>
+    const attendanceTable = document.getElementById('attendanceTable');
+
+    // Load attendance from localStorage on page load
+    window.onload = function () {
+      const data = localStorage.getItem('attendanceData');
+      if (data) {
+        const attendance = JSON.parse(data);
+        attendance.forEach(({ name, admission, status }) => {
+          const newRow = attendanceTable.insertRow();
+          newRow.insertCell(0).innerText = name;
+          newRow.insertCell(1).innerText = admission;
+          newRow.insertCell(2).innerText = status;
+        });
+      }
+    };
+
+    // Save attendance to localStorage
+    function saveAttendanceToLocalStorage() {
+      const rows = [...attendanceTable.rows].map(row => ({
+        name: row.cells[0].innerText,
+        admission: row.cells[1].innerText,
+        status: row.cells[2].innerText
+      }));
+      localStorage.setItem('attendanceData', JSON.stringify(rows));
+    }
+
     // Generate QR Code
     function generateQRCode() {
       const name = document.getElementById('studentName').value.trim();
@@ -149,7 +175,6 @@
     }
 
     // QR Code Scanner
-    const attendanceTable = document.getElementById('attendanceTable');
     const scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
 
     scanner.render((decodedText) => {
@@ -169,6 +194,9 @@
         newRow.insertCell(0).innerText = name;
         newRow.insertCell(1).innerText = admission;
         newRow.insertCell(2).innerText = "Present";
+
+        // Save to localStorage
+        saveAttendanceToLocalStorage();
 
         document.getElementById('scanResult').innerText = `Marked Present: ${name}`;
       } catch (error) {
