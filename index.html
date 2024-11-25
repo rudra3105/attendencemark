@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Code Attendance</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html5-qrcode/minified/html5-qrcode.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    .container {
+      margin: 20px;
+    }
+    canvas {
+      margin-top: 10px;
+    }
+    table {
+      margin: 20px auto;
+      border-collapse: collapse;
+      width: 90%;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #f4f4f4;
+    }
+  </style>
+</head>
+<body>
+  <h1>QR Code Attendance System</h1>
+
+  <div class="container">
+    <h2>Generate QR Code</h2>
+    <input type="text" id="studentName" placeholder="Enter Student Name">
+    <input type="text" id="admissionNumber" placeholder="Enter Admission Number">
+    <button onclick="generateQRCode()">Generate QR Code</button>
+    <canvas id="qrcodeCanvas"></canvas>
+  </div>
+
+  <div class="container">
+    <h2>Scan QR Code</h2>
+    <div id="reader" style="width: 300px; margin: auto;"></div>
+    <p id="scanResult"></p>
+  </div>
+
+  <div class="container">
+    <h2>Attendance Sheet</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Student Name</th>
+          <th>Admission Number</th>
+          <th>Attendance Status</th>
+        </tr>
+      </thead>
+      <tbody id="attendanceTable"></tbody>
+    </table>
+  </div>
+
+  <script>
+    // Generate QR Code
+    function generateQRCode() {
+      const name = document.getElementById('studentName').value;
+      const admission = document.getElementById('admissionNumber').value;
+
+      if (!name || !admission) {
+        alert("Please enter both Student Name and Admission Number.");
+        return;
+      }
+
+      const qrData = JSON.stringify({ name, admission });
+      const canvas = document.getElementById('qrcodeCanvas');
+
+      QRCode.toCanvas(canvas, qrData, (error) => {
+        if (error) console.error(error);
+        console.log("QR Code generated!");
+      });
+    }
+
+    // Start QR Code Scanner
+    const attendanceTable = document.getElementById('attendanceTable');
+    const scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+
+    scanner.render((decodedText) => {
+      const data = JSON.parse(decodedText);
+      const { name, admission } = data;
+
+      // Check if already marked
+      const existingRow = [...attendanceTable.rows].find(row => row.cells[1].innerText === admission);
+
+      if (existingRow) {
+        alert(`${name} has already been marked present!`);
+        return;
+      }
+
+      // Add to attendance table
+      const newRow = attendanceTable.insertRow();
+      newRow.insertCell(0).innerText = name;
+      newRow.insertCell(1).innerText = admission;
+      newRow.insertCell(2).innerText = "Present";
+    });
+  </script>
+</body>
+</html>
